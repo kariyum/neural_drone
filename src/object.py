@@ -19,8 +19,10 @@ class Object:
         self.screen = screen
 
     def draw(self):
-        # self.screen.blit(self.rotated_image, self.rotated_image_rect)
-        self.screen.blit(self.image, self.image.get_rect())
+        self.screen.blit(self.rotated_image, self.rotated_image_rect)
+        # self.screen.blit(self.image, self.image.get_rect())
+        # self.screen.blit(self.rotated_image, self.pos)
+
     def rotate(self, angle, pivot):
         pos = self.pos
         image = self.image
@@ -77,7 +79,18 @@ class Object:
 
     def pushRight(self, angle):
         """rotate the object having the right end as the center"""
-        self.rotate(angle,pygame.math.Vector2(0, 0))
+        self.rotate(angle, self.size/2)
+        myangle = angle-25
+        centerx = self.pos.x - self.size.x/2 * math.cos(-2*math.pi * myangle/360)
+        centery = self.pos.y - self.size.x/2 * math.sin(-2*math.pi * myangle/360)
+        
+        intialPos = pygame.math.Vector2(self.oriPos.x - self.size.x/2 * math.cos(-2*math.pi * 25/360), 
+                                        self.oriPos.y - self.size.x/2 * math.sin(2*math.pi * 25/360))
+        displacement = intialPos - pygame.math.Vector2(centerx, centery) 
+        self.pos += displacement
+        pygame.draw.circle(self.screen, (255,255,255), intialPos, 10)
+        pygame.draw.circle(self.screen, (255,255,255), (centerx, centery), 10)
+        # self.rotated_image = pygame.transform.rotate(self.image, angle)
         pass
 
     def rotate1(self, angle, pivot, offset):
@@ -91,7 +104,18 @@ class Object:
 
     def pushLeft(self, angle):
         """rotate the object having the left end as the center"""
-        # self.rotate1(angle, self.pos/2, pygame.math.Vector2(10,10))
-        pygame.transform.rotate(self.image, angle)
+        self.rotate(angle, self.size/2)
+        print(self.pos)
 
+        myangle = angle+25
+        centerx = self.pos.x + self.size.x/2 * math.cos(2*math.pi * myangle/360)
+        centery = self.pos.y - self.size.x/2 * math.sin(2*math.pi * myangle/360)
+        
+        intialPos = pygame.math.Vector2(self.oriPos.x + self.size.x/2 * math.cos(2*math.pi * 25/360), 
+                                        self.oriPos.y - self.size.x/2 * math.sin(2*math.pi * 25/360))
+        displacement = intialPos - pygame.math.Vector2(centerx, centery) 
+        self.pos += displacement
+        pygame.draw.circle(self.screen, (255,255,255), intialPos, 10)
+        pygame.draw.circle(self.screen, (255,255,255), (centerx, centery), 10)
+        # self.rotated_image = pygame.transform.rotate(self.image, angle)
         pass
