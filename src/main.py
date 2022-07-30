@@ -15,6 +15,8 @@ def blitRotate(surf, image, pos, originPos, angle):
     # rotate and blit the image
     surf.blit(rotated_image, rotated_image_rect)
 
+
+
 def main():
     # initialize the pygame module
     pygame.init()
@@ -30,6 +32,7 @@ def main():
     pos = pygame.math.Vector2(350, 350)
     vy = 0
     
+    
     drone = Object("./resources/drone.png", pygame.math.Vector2(300, 350), screen)
     left = False
     right = False
@@ -40,32 +43,39 @@ def main():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_z:
                     left = True
-                    # drone.pushLeft()
                 if event.key == pygame.K_e:
                     right = True
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_z:
+                    drone.lastpos = pygame.math.Vector2(drone.pos.x, drone.pos.y)
                     left = False
-                if event.key == pygame.K_z:
+                if event.key == pygame.K_e:
                     right = False
             
-        if (left):
-            # drone.addForce(pygame.math.Vector2(0,-2))
-            drone.pushLeft(-10)
-        if (right):
-            drone.pushRight(10)
 
+        if (right):
+            drone.thrustRight()
+        else:
+            drone.decelerateR()
+        if (left):
+            drone.thrustLeft()
+        else:
+            drone.decelerateL()
         # rotatedImage = pygame.transform.rotate(image, rotationAngle)
         # screen.blit(rotatedImage, (posx, posy))
-        vy += 0.1
+        
+        vy = 2
         pos.y += 0.05
-        rotationAngle+=1
         # blitRotate(screen, image, (pos.x, pos.y), (100/2, 50/2), rotationAngle)
 
         # drone.update()
         # drone.rotate(rotationAngle, pygame.math.Vector2(drone.size.x, 0))
-        drone.draw()
 
+               
+        
+        drone.update()
+        drone.leftPivot -= pygame.math.Vector2(0,-vy)
+        drone.rightPivot -= pygame.math.Vector2(0,-vy)
         # stop here 
         pygame.display.flip()     
         clock.tick(60)
