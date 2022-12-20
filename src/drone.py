@@ -4,14 +4,15 @@ import random
 class Propeller:
     def __init__(self, src, pos):
         self.pos = pos
-        self.size = pygame.math.Vector2(20, 5)
+        self.size = pygame.math.Vector2(25, 7)
         self.image = pygame.transform.scale(pygame.image.load(src), self.size)
         self.screen = screen
         self.rotated_image = pygame.transform.rotate(self.image, 0)
         self.rotated_image_rect = self.rotated_image.get_rect(center = self.pos)
     def draw(self):
+        self.rotated_image = pygame.transform.flip(self.rotated_image, True, False)
         self.screen.blit(self.rotated_image, self.rotated_image_rect)
-    
+
 def degToRad(deg):
     return deg * math.pi / 180
 
