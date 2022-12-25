@@ -1,5 +1,6 @@
 # this file is for managing the game window
 import pygame
+import time
 
 # local imports
 from drone import Drone
@@ -12,8 +13,10 @@ class Engine:
         
         self.screen = pygame.display.set_mode((width, height))
         self.clock = pygame.time.Clock()
+        self.w = width
+        self.h = height
+        self.drone = Drone(pygame.math.Vector2(width/2, height/2), self.screen)
 
-        self.drone = Drone(pygame.math.Vector2(800, 500), self.screen)
 
     def run(self):
         fl = False
@@ -47,6 +50,9 @@ class Engine:
             
             self.drone.update()
             self.drone.draw()
+            if ( not self.drone.inScreen()):
+                self.drone = Drone(pygame.math.Vector2(self.w/2, self.h/2), self.screen)
+                time.sleep(0.3)
             pygame.display.flip()     
             self.clock.tick(75)
             self.screen.fill(0)

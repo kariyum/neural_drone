@@ -89,7 +89,12 @@ class Drone:
         self.phiv = self.phiv * 0.975 + self.phia
         self.phi = self.phi + self.phiv
         pass
+    
+    def inScreen(self):
+        w, h = pygame.display.get_surface().get_size()
+        return (self.pos.x > 0 and self.pos.x < w and self.pos.y > 0 and self.pos.y < h)
 
+        
 def degToRad(deg):
     return deg * math.pi / 180
 

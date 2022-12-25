@@ -14,7 +14,7 @@ class Propeller:
         self.rayon = 55
         self.size = pygame.math.Vector2(30, 10)
         # self.image = pygame.transform.scale(pygame.image.load(src), self.size)
-        self.image = cv2.imread(r"resources/step1.png", cv2.IMREAD_UNCHANGED)
+        self.image = cv2.imread(r"resources/propeller.png", cv2.IMREAD_UNCHANGED)
         self.screen = screen
         # self.rotated_image = pygame.transform.rotate(self.image, 0)
         # self.rotated_image_rect = self.rotated_image.get_rect(center = self.pos)
