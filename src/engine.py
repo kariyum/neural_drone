@@ -1,10 +1,12 @@
 # this file is for managing the game window
 import pygame
 import time
+from functools import partial
 
 # local imports
 from drone import Drone
 
+fn_create_drone = partial(Drone, )
 class Engine:
     def __init__(self, width, height):
         # basic inits
@@ -15,43 +17,28 @@ class Engine:
         self.clock = pygame.time.Clock()
         self.w = width
         self.h = height
-        self.drone = Drone(pygame.math.Vector2(width/2, height/2), self.screen)
-
+        self.drone = Drone(screen= self.screen)
 
     def run(self):
-        fl = False
-        fr = False
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     raise SystemExit
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_z:
-                        fl = True
+                        self.drone.left_acceleration = True
                     if event.key == pygame.K_e:
-                        fr = True
+                        self.drone.right_acceleration = True
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_z:
-                        fl = False
-
+                        self.drone.left_acceleration = False
                     if event.key == pygame.K_e:
-                        fr = False
-
-            if (fr == False):
-                self.drone.fr *= 0.95
-            else:
-                self.drone.fr += 0.02
-                self.drone.fr = min(self.drone.fr, 0.5)
-            if (fl == False):
-                self.drone.fl *= 0.95
-            else:
-                self.drone.fl += 0.02
-                self.drone.fl = min(self.drone.fl, 0.5)
+                        self.drone.right_acceleration = False
             
-            self.drone.update()
+            self.drone.update(actions= [[1, 1]])
             self.drone.draw()
             if ( not self.drone.inScreen()):
-                self.drone = Drone(pygame.math.Vector2(self.w/2, self.h/2), self.screen)
+                self.drone = Drone(screen= self.screen)
                 time.sleep(0.3)
             pygame.display.flip()     
             self.clock.tick(75)
