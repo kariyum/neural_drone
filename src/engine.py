@@ -5,8 +5,9 @@ from functools import partial
 
 # local imports
 from drone import Drone
+from network import GeneticNetwork
 
-fn_create_drone = partial(Drone, )
+POP_SIZE = 10
 class Engine:
     def __init__(self, width, height):
         # basic inits
@@ -14,33 +15,41 @@ class Engine:
         pygame.display.set_caption("Drone brain")
         
         self.screen = pygame.display.set_mode((width, height))
-        self.clock = pygame.time.Clock()
         self.w = width
         self.h = height
-        self.drone = Drone(screen= self.screen)
+        self.fn_create_drone = partial(Drone, self.screen)
+        # self.drone = self.fn_create_drone()
+        self.genetic = GeneticNetwork(population_size= POP_SIZE)
+        self.drones = [self.fn_create_drone() for _ in range(POP_SIZE)]
 
     def run(self):
+        clock = pygame.time.Clock()
+        start_time = time.time()
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     raise SystemExit
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_z:
-                        self.drone.left_acceleration = True
-                    if event.key == pygame.K_e:
-                        self.drone.right_acceleration = True
-                if event.type == pygame.KEYUP:
-                    if event.key == pygame.K_z:
-                        self.drone.left_acceleration = False
-                    if event.key == pygame.K_e:
-                        self.drone.right_acceleration = False
+
+            for i, (network, drone) in enumerate(zip(self.genetic.agents, self.drones)):
+                if (drone.update(network) == 1 and network.score == None):
+                    # drone is out of screen and so is dead. -> get score
+                    self.genetic.agents[i].score = time.time() - start_time
+                    # print(time.time() - start_time)
+                drone.draw()
             
-            self.drone.update(actions= [[1, 1]])
-            self.drone.draw()
-            if ( not self.drone.inScreen()):
-                self.drone = Drone(screen= self.screen)
+            if (all([not x.inScreen() for x in self.drones])):
+                # genetic do your thing
+                for d in self.drones:
+                    d.revive()
+                for n in self.genetic.agents:
+                    print(n.score)
+                print("------------------------------")
+                # reset network scores
+                for i in range(len(self.genetic.agents)):
+                    self.genetic.agents[i].score = None
                 time.sleep(0.3)
+                start_time = time.time()
             pygame.display.flip()     
-            self.clock.tick(75)
+            clock.tick(75)
             self.screen.fill(0)
             

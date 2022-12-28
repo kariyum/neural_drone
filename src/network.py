@@ -14,10 +14,17 @@ def sigmoid(f: float) -> float:
 def identity(f: float) -> float:
     return f
 
+def flatten(w) -> list[list[float]] :
+    """flattens a matrix to a 1 dimensional vector"""
+
+def unflatten(w, shape) -> list[list[float]] :
+    """transforms a single dimension vector into a matrix"""
+
 class Network:
     def __init__(self) -> None:
         self.layers : list[Layer] = list()
         self.self_init()
+        self.score = None
     
     def add(self, output_size : int, input_size : int = None, activation : callable = leakyRelu, w= None) -> None:
         if (input_size == None and len(self.layers) == 0):
@@ -39,7 +46,7 @@ class Network:
             print("Layer {}: {}".format(i+1, layer))
 
     def self_init(self):
-        self.add(12, 4, activation= leakyRelu)
+        self.add(12, 5, activation= leakyRelu)
         self.add(24)
         self.add(2, activation= sigmoid)
 
@@ -50,7 +57,8 @@ class Layer:
         self.weights = self.setWeights(weights)
         self.f_activation : callable = np.vectorize(activation_function)
         self.f_name = activation_function.__name__
-    
+        self.shape = self.weights.shape
+        
     def setWeights(self, w) -> list[list[int]]:
         """Sets weights as the desired weights from input or random weights."""
         if (w != None):
@@ -78,10 +86,10 @@ class GeneticNetwork:
     """Main class, used to manipulate agents in terms of their neural netowrk and perform genetic algorithm transofmations (fitness, selection, crossover and mutation)"""
     def __init__(self, population_size: int) -> None:
         self.agents : list[Network] = [Network() for _ in range(population_size)]
-    
+        
     def evaluate(self):
         """Evaluates agent performace"""
-
+        # each drone will score itself upon dying.
     def select(self):
         """Method that aims to select best of current agents"""
     

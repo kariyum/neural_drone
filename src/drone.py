@@ -9,27 +9,33 @@ from network import Network
 WIDTH, HEIGHT = (1280, 720) # (1920, 1080)
 class Drone:
     def __init__(self, screen, pos= pygame.math.Vector2(WIDTH/2, HEIGHT/2)):
+        self.screen = screen
         self.size = pygame.math.Vector2(100, 50)
         self.image = pygame.transform.scale(pygame.image.load("C:\\Users\\S B S\\Documents\\neural_drone\\neural_drone\\resources\\drone.png"), self.size)
-        self.rotated_image = pygame.transform.rotate(self.image, 0)
-        self.pos = pygame.math.Vector2(pos.x, pos.y)
-        self.rotated_image_rect = self.rotated_image.get_rect(center = self.pos)
-        self.screen = screen
         self.left_prop = Propeller(self.screen, pygame.math.Vector2(100, 50), left= 1)
         self.right_prop = Propeller(self.screen, pygame.math.Vector2(100, 50), left= 0)
+        self.rotated_image = pygame.transform.rotate(self.image, 0)
+        self.init_pos = pos
+        self.pos = pos.copy()
+        self.rotated_image_rect = self.rotated_image.get_rect(center = self.pos)
         self.friction = 0.05
         self.gravity = 0.5 # 0.5ze
         self.radius = 1/2
         self.mass = 1
+        self.init_dynamic_attributes()
+    
+    def revive(self):
+        self.init_dynamic_attributes()
+    
+    def init_dynamic_attributes(self):
+        self.pos = self.init_pos.copy()
         self.phiv = 0
         self.phi = 0
         self.vx = 0
         self.vy = 0
         self.fl = 0
         self.fr = 0
-        self.l = list()
-        self.left_acceleration = False
-        self.right_acceleration = False
+    
     def draw(self):
         self.screen.blit(self.rotated_image, self.rotated_image_rect)
         self.left_prop.draw()
@@ -37,10 +43,12 @@ class Drone:
         # self.left_prop.draw()
         # self.right_prop.draw()
 
-    def update(self, actions):
-        # actions= self.network.forward([[self.pos.x / WIDTH, self.pos.y / HEIGHT, self.fl*2, self.fr*2]]) # multiplied by 2 for the range to be between 0 and 1
+    def update(self, network):
+        actions= network.forward([[self.pos.x / WIDTH, self.pos.y / HEIGHT, self.fl*2, self.fr*2, self.phi]]) # multiplied by 2 for the range to be between 0 and 1
         self.left_acceleration, self.right_acceleration = [True if random.random() <= a else False for a in actions[-1]]
         self.updateForces()
+        if (not self.inScreen()): return 1
+        return 0
     
     def updateForces(self):
         self.updateFR()
@@ -103,7 +111,7 @@ class Drone:
     
     def inScreen(self):
         w, h = pygame.display.get_surface().get_size()
-        return (self.pos.x > 0 and self.pos.x < w and self.pos.y > 0 and self.pos.y < h)
+        return (self.pos.x + 70> 0 and self.pos.x - 70 < w and self.pos.y + 70 > 0 and self.pos.y - 70 < h)
 
         
 def degToRad(deg):
