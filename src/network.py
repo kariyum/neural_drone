@@ -131,8 +131,11 @@ class GeneticNetwork:
 
     def crossover(self, nets: list[Network]) -> list[Network]:
         """Method used to perform the crossover between 2 agents (networks)"""
-        unflattened_weights = np.concatenate([n.flatten() for n in nets])
-        random.shuffle(unflattened_weights)
+        unflattened_weights = [n.flatten() for n in nets]
+        if (len(unflattened_weights[0]) != len(unflattened_weights[1])):
+            raise ValueError("Networks doesn't have the same number of neurones")
+        slice_at = random.randint(a= 1, b= len(unflattened_weights[0])-1)
+        unflattened_weights = np.concatenate([unflattened_weights[i][:slice_at].tolist() + unflattened_weights[(i+1)%2][slice_at:].tolist() for i in range(2)])
         start = 0
         length = 0
         for n in nets:
