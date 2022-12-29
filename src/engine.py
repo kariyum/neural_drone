@@ -7,7 +7,7 @@ from functools import partial
 from drone import Drone
 from network import GeneticNetwork
 
-POP_SIZE = 10
+POP_SIZE = 20
 class Engine:
     def __init__(self, width, height):
         # basic inits
@@ -31,22 +31,23 @@ class Engine:
                     raise SystemExit
 
             for i, (network, drone) in enumerate(zip(self.genetic.agents, self.drones)):
-                if (drone.update(network) == 1 and network.score == None):
-                    # drone is out of screen and so is dead. -> get score
-                    self.genetic.agents[i].score = time.time() - start_time
+                if (drone.update(network) == 1 and network.fitness == None):
+                    # drone is out of screen and so is dead. -> get fitness
+                    self.genetic.agents[i].fitness = time.time() - start_time
                     # print(time.time() - start_time)
                 drone.draw()
             
             if (all([not x.inScreen() for x in self.drones])):
                 # genetic do your thing
+                for n in self.genetic.agents:
+                    print(n.fitness)
+                print("------------------------------")
+                self.genetic.advance()
                 for d in self.drones:
                     d.revive()
-                for n in self.genetic.agents:
-                    print(n.score)
-                print("------------------------------")
                 # reset network scores
                 for i in range(len(self.genetic.agents)):
-                    self.genetic.agents[i].score = None
+                    self.genetic.agents[i].fitness = None
                 time.sleep(0.3)
                 start_time = time.time()
             pygame.display.flip()     

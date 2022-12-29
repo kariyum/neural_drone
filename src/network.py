@@ -24,9 +24,9 @@ class Network:
     def __init__(self) -> None:
         self.layers : list[Layer] = list()
         self.self_init()
-        self.score = None
+        self.fitness = None
     
-    def add(self, output_size : int, input_size : int = None, activation : callable = leakyRelu, w= None) -> None:
+    def add(self, output_size : int, input_size : int = None, activation : callable = leakyRelu, w= np.array([])) -> None:
         if (input_size == None and len(self.layers) == 0):
             raise ValueError("Adding a layer without input_size as a first layer. Check add method, Network class.")
         # set input_size of this current layer the same as the output size of the last added layer
@@ -50,8 +50,19 @@ class Network:
         self.add(24)
         self.add(2, activation= sigmoid)
 
+    def flatten(self):
+        """returns a combined vector of weights of the network"""
+        return np.concatenate([layer.flatten() for layer in self.layers])
+
+    def setWeights(self, w: list[float]):
+        """Sets new weights to neural networks"""
+        start = 0
+        for l in self.layers:
+            start += l.unflattenAndSet(w[start:])
+        
+
 class Layer:
-    def __init__(self, input_size: int, output_size: int, weights: list[list[float]]= None, activation_function: callable = leakyRelu) -> None:
+    def __init__(self, input_size: int, output_size: int, weights: list[list[float]]= np.array([]), activation_function: callable = leakyRelu) -> None:
         self.input_size : int = input_size
         self.output_size : int = output_size
         self.weights = self.setWeights(weights)
@@ -61,7 +72,7 @@ class Layer:
         
     def setWeights(self, w) -> list[list[int]]:
         """Sets weights as the desired weights from input or random weights."""
-        if (w != None):
+        if (len(w) != 0):
             return w
         return self.randomWeights()
     
@@ -79,6 +90,16 @@ class Layer:
         n = self.input_size
         return np.array([[random.normalvariate(mu=0, sigma= np.sqrt(2/n)) for _ in range(self.output_size)] for _ in range(self.input_size)])
 
+    def flatten(self):
+        """flattens the weights of this layer"""
+        return self.weights.flatten()
+
+    def unflattenAndSet(self, w):
+        """unflattens the argument to the corresponding shape and sets the weights"""
+        w = np.reshape(w[:np.product(self.shape)], self.shape)
+        self.setWeights(w)
+        return np.product(self.shape)
+    
     def __repr__(self) -> str:
         return "Weights shape: {}, Activation: {}".format(self.weights.shape, self.f_name)
 
@@ -86,18 +107,50 @@ class GeneticNetwork:
     """Main class, used to manipulate agents in terms of their neural netowrk and perform genetic algorithm transofmations (fitness, selection, crossover and mutation)"""
     def __init__(self, population_size: int) -> None:
         self.agents : list[Network] = [Network() for _ in range(population_size)]
+        self.pop_size = population_size
         
-    def evaluate(self):
-        """Evaluates agent performace"""
-        # each drone will score itself upon dying.
-    def select(self):
-        """Method that aims to select best of current agents"""
-    
-    def crossover(self):
-        """Method used to perform the crossover between 2 agents (networks)"""
+    def advance(self):
+        """Runs the genetic algorithm on current agnets"""
+        evaluation = self.evaluate()
+        sorted_agents = self.select(evaluation)
+        new_2_agents = self.crossover(sorted_agents[:2])
+        mutated_agents = self.mutate(new_2_agents + sorted_agents)
+        agents = sorted_agents[:2] + mutated_agents
+        self.agents =  agents + [Network() for _ in range(self.pop_size - len(agents))]
+        if (len(self.agents) != self.pop_size):
+            raise ValueError("Agents != pop_size")
 
-    def mutate(self):
+    def evaluate(self) -> list[(float, Network)]:
+        """Evaluates agent performace, returns a lit of couples (score, network)"""
+        # each drone will score itself upon dying.
+        return [(n.fitness, n) for n in self.agents]
+    
+    def select(self, evaluation) -> list[Network]:
+        """Method that returns 20% of the agents sorted by their score"""
+        return [x[1] for x in sorted(evaluation, key= lambda x : x[0], reverse= False)][:int(0.2*self.pop_size)]
+
+    def crossover(self, nets: list[Network]) -> list[Network]:
+        """Method used to perform the crossover between 2 agents (networks)"""
+        unflattened_weights = np.concatenate([n.flatten() for n in nets])
+        random.shuffle(unflattened_weights)
+        start = 0
+        length = 0
+        for n in nets:
+            length += len(n.flatten())
+            n.setWeights(unflattened_weights[start:length])
+            start += length
+        return nets
+
+    def mutate(self, agents: list[Network]) -> list[Network]:
         """Method used to perform a random mutation on a network"""
+        for agent in agents:
+            flattened = agent.flatten()
+            for _ in range(len(flattened)):
+                if random.uniform(0.0, 1.0) <= 0.1:
+                    randint = random.randint(0,len(flattened)-1)
+                    flattened[randint] = np.random.randn()
+            agent.setWeights(flattened)
+        return agents 
 
 # def leakyRelu(numpy_2d_martrix):
 #     a = 0.001
