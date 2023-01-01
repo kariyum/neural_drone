@@ -6,6 +6,7 @@ import math
 
 class Propeller:
     def __init__(self, screen, pos, left):
+        self.drew = False
         self.phi_diff = -150 if left else -30
         self.dy = 0
         self.pos = pos
@@ -47,27 +48,13 @@ class Propeller:
         self.z = 0.0 
 
     def draw(self):
-        # self.rotated_image = pygame.transform.flip(self.rotated_image, True, False)
-        # self.screen.blit(self.rotated_image, self.rotated_image_rect)
-        # image = pygame.transform.scale(pygame.image.load(self.images[self.animation_step]), self.size)
         self.rotate()
-        #create a surface with the size as the array
-        # surf = pygame.Surface((self.rotated_image.shape[0], self.rotated_image.shape[1]))
-        # draw the array onto the surface
-
-        # self.rotated_image = pygame.image.load(r"resources/rotated_image.png")
-        # self.screen.blit(self.rotated_image, self.pos)
-        
-        
-        # pygame.surfarray.blit_array(surf, self.rotated_image)
-        # transform the surface to screen size
-        # print(self.rotated_image[:,:,:2])
-        # self.screen.blit(pygame.surfarray.make_surface(self.rotated_image[:,:,1:4]), self.pos)
         surf = c2ImageToSurface(self.rotated_image)
         surf = pygame.transform.scale(surf, self.size)
         rotated_image = pygame.transform.rotate(surf, self.phi)
         rotated_image_rect = rotated_image.get_rect(center = self.pos)
         self.screen.blit(rotated_image, rotated_image_rect)
+    
     def rotate(self):
         # scale_percent = 200 
         # width = int(self.image.shape[1] * scale_percent / 100)

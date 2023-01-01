@@ -46,9 +46,10 @@ class Network:
             print("Layer {}: {}".format(i+1, layer))
 
     def self_init(self):
-        self.add(12, 5, activation= leakyRelu)
-        self.add(24)
-        self.add(2, activation= sigmoid)
+        self.add(2, 11, activation= sigmoid)
+        # self.add(16)
+        # self.add(2, activation= sigmoid)
+        # self.add(2, activation= sigmoid)
 
     def flatten(self):
         """returns a combined vector of weights of the network"""
@@ -69,7 +70,20 @@ class Layer:
         self.f_activation : callable = np.vectorize(activation_function)
         self.f_name = activation_function.__name__
         self.shape = self.weights.shape
+        self.bias = random.random() * 2 - 1
+    
+    def mutateBias(self):
+        if (random.uniform(0.0, 1.0) > 0.1):
+            self.bias = self.bias * 1.5 if random.random() > 0.5 else self.bias * 0.5
+        if (random.uniform(0.0, 1.0) > 0.1):
+            self.bias = self.bias * -1
         
+    def setBias(self, newbias):
+        self.bias = newbias
+    
+    def getBias(self):
+        return self.bias
+    
     def setWeights(self, w) -> list[list[int]]:
         """Sets weights as the desired weights from input or random weights."""
         if (len(w) != 0):
@@ -83,7 +97,7 @@ class Layer:
         if (input_matrix.shape[1] != self.input_size):
             raise ValueError("Input shape != weights' shape.\nForward function, Layer class.")
         f = np.matmul(input_matrix, self.weights)
-        return self.f_activation(f)
+        return self.f_activation(f + self.bias)
 
     def randomWeights(self):
         """Initialize the weights with the He initialization."""
@@ -134,8 +148,12 @@ class GeneticNetwork:
         unflattened_weights = [n.flatten() for n in nets]
         if (len(unflattened_weights[0]) != len(unflattened_weights[1])):
             raise ValueError("Networks doesn't have the same number of neurones")
-        slice_at = random.randint(a= 1, b= len(unflattened_weights[0])-1)
-        unflattened_weights = np.concatenate([unflattened_weights[i][:slice_at].tolist() + unflattened_weights[(i+1)%2][slice_at:].tolist() for i in range(2)])
+        for i in range(len(unflattened_weights[0])):
+            if (random.random() > 0.5):
+                unflattened_weights[0][i], unflattened_weights[1][i] = unflattened_weights[1][i], unflattened_weights[0][i]
+        # slice_at = random.randint(a= 1, b= len(unflattened_weights[0])-1)
+        # unflattened_weights = np.concatenate([unflattened_weights[i][:slice_at].tolist() + unflattened_weights[(i+1)%2][slice_at:].tolist() for i in range(2)])
+        unflattened_weights = np.concatenate(unflattened_weights)
         start = 0
         length = 0
         for n in nets:
@@ -148,10 +166,13 @@ class GeneticNetwork:
         """Method used to perform a random mutation on a network"""
         for agent in agents:
             flattened = agent.flatten()
-            for _ in range(len(flattened)):
-                if random.uniform(0.0, 1.0) <= 0.1:
-                    randint = random.randint(0,len(flattened)-1)
-                    flattened[randint] = np.random.randn()
+            if random.uniform(0.0, 1.0) <= 0.1:
+                randint = random.randint(0,len(flattened)-1)
+                # flattened[randint] = np.random.randn()
+                if (random.random() > 0.5):
+                    flattened[randint] = flattened[randint]*0.5 if (random.random() > 0.5) else flattened[randint]*1.5
+                else:
+                    flattened[randint] = flattened[randint] if (random.random() > 0.5) else flattened[randint]*-1
             agent.setWeights(flattened)
         return agents 
 

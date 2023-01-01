@@ -30,7 +30,10 @@ class Drone:
     def init_dynamic_attributes(self):
         self.pos = self.init_pos.copy()
         self.phiv = 0
+        self.phia = 0
         self.phi = 0
+        self.ax = 0
+        self.ay = 0
         self.vx = 0
         self.vy = 0
         self.fl = 0
@@ -44,7 +47,7 @@ class Drone:
         # self.right_prop.draw()
 
     def update(self, network):
-        actions= network.forward([[self.pos.x / WIDTH, self.pos.y / HEIGHT, self.fl*2, self.fr*2, self.phi]]) # multiplied by 2 for the range to be between 0 and 1
+        actions= network.forward([[self.pos.x / WIDTH, self.pos.y / HEIGHT, self.fl*2, self.fr*2, self.ax, self.ay, self.vx, self.vy, self.phi / 360, self.phiv, self.phia]]) # multiplied by 2 for the range to be between 0 and 1
         self.left_acceleration, self.right_acceleration = [True if random.random() <= a else False for a in actions[-1]]
         self.updateForces()
         if (not self.inScreen()): return 1
