@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from drone import Drone
 from network import GeneticNetwork
 
-POP_SIZE = 30
+POP_SIZE = 50
 class Engine:
     def __init__(self, width, height):
         # basic inits
@@ -30,30 +30,38 @@ class Engine:
         history_1 = list()
         history_2 = list()
         game_on = True
+        propeller_animation = dict()
+        weights_address = set()
         while game_on:
+            frame_dtime = time.time()
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     game_on = False
                     # raise SystemExit
 
             for i, (network, drone) in enumerate(zip(self.genetic.agents, self.drones)):
-                if (drone.update(network) == 1 and network.fitness == None):
+                if (drone.update(network, time.time() - frame_dtime) == 1 and network.fitness == None):
                     # drone is out of screen and so is dead. -> get fitness
                     self.genetic.agents[i].fitness = time.time() - start_time
-                    # print(time.time() - start_time)
-                drone.draw()
+                drone.draw(propeller_animation)
+            # print(len(propeller_animation))
             
             if (all([not x.inScreen() for x in self.drones])):
+                # print([network.flatten() for network in self.genetic.agents])
                 # genetic do your thing
                 # for n in self.genetic.agents:
                 #     print(n.fitness)
                 # print("------------------------------")
                 print("Gen: {}".format(generation))
-                fitness = [n.fitness for n in self.genetic.agents]
-                print("Best performance: {}".format(max(fitness)))
-                print("Average performance: {}".format(sum(fitness)/len(fitness)))
-                history_1.append(sum(fitness)/len(fitness))
-                history_2.append(max(fitness))
+                if len(set([hex(id(network)) for network in self.genetic.agents])) != POP_SIZE:
+                    raise ValueError("Networks have same memory address")
+                fitness = [(n.fitness, n) for n in self.genetic.agents]
+                best_fitness, best_network = max(fitness, key= lambda x : x[0])
+                print("Best performance: {}, weights set from random: {}".format(best_fitness, best_network.randomWeights))
+                print("Average performance: {}".format(sum([s[0] for s in fitness])/len(fitness)))
+                history_1.append(sum([s[0] for s in fitness])/len(fitness))
+                history_2.append(best_fitness)
+                # genetic algorithm iteration
                 self.genetic.advance()
                 for d in self.drones:
                     d.revive()
@@ -63,7 +71,6 @@ class Engine:
                 generation += 1
                 time.sleep(0.3)
                 start_time = time.time()
-                
             pygame.display.flip()     
             clock.tick(75)
             self.screen.fill(0)

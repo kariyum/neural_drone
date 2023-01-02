@@ -47,14 +47,19 @@ class Propeller:
         self.y = 0.0
         self.z = 0.0 
 
-    def draw(self):
-        self.rotate()
-        surf = c2ImageToSurface(self.rotated_image)
-        surf = pygame.transform.scale(surf, self.size)
+    def draw(self, prop_anim):
+        self.y = self.y + self.dy  # increase self.y angel by 3
+        self.y %= 180
+        surf = self.rotate() if not int(self.y) in prop_anim else prop_anim[int(self.y)]
+        prop_anim[int(self.y)] = surf
         rotated_image = pygame.transform.rotate(surf, self.phi)
         rotated_image_rect = rotated_image.get_rect(center = self.pos)
         self.screen.blit(rotated_image, rotated_image_rect)
+        pass
     
+    def performanceDraw(self):
+        pass
+
     def rotate(self):
         # scale_percent = 200 
         # width = int(self.image.shape[1] * scale_percent / 100)
@@ -93,11 +98,15 @@ class Propeller:
         # pygame.pixelcopy.array_to_surface(self.screen, dst[:,:,:3])
         # cv2.imshow("dst",dst)
         # cv2.imwrite("rotated_image"+str(i)+".jpg", dst)
-        self.y = self.y + self.dy  # increase self.y angel by 3
+        
+        # print(self.y)
         # self.x = self.x + 1
         # self.z += 1
         self.rotated_image = dst
         # cv2.imwrite(r"resources/rotated_image.png", dst)    
+        surf = c2ImageToSurface(self.rotated_image)
+        surf = pygame.transform.scale(surf, self.size)
+        return surf
     
     def update(self, power_rate, drone_phi, drone_position):
         self.dy = self.dy * 0.4 + 50 * power_rate

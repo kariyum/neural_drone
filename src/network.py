@@ -21,10 +21,13 @@ def unflatten(w, shape) -> list[list[float]] :
     """transforms a single dimension vector into a matrix"""
 
 class Network:
-    def __init__(self) -> None:
+    def __init__(self, w = np.array([]), biases= []) -> None:
+        self.randomWeights = True if len(w) ==0 else False
         self.layers : list[Layer] = list()
         self.self_init()
         self.fitness = None
+        self.setWeights(w)
+        self.setBiases(biases)
     
     def add(self, output_size : int, input_size : int = None, activation : callable = leakyRelu, w= np.array([])) -> None:
         if (input_size == None and len(self.layers) == 0):
@@ -47,7 +50,7 @@ class Network:
 
     def self_init(self):
         self.add(2, 11, activation= sigmoid)
-        # self.add(16)
+        # self.add(32)
         # self.add(2, activation= sigmoid)
         # self.add(2, activation= sigmoid)
 
@@ -57,16 +60,32 @@ class Network:
 
     def setWeights(self, w: list[float]):
         """Sets new weights to neural networks"""
+        if (len(w) == 0):
+            return
         start = 0
         for l in self.layers:
             start += l.unflattenAndSet(w[start:])
         
-
+    def setBiases(self, biases):
+        if len(biases) == 0:
+            return
+        for i, _ in enumerate(self.layers):
+            self.layers[i].setBias(biases[i])
+    
+    def getBiases(self):
+        biases = list()
+        for layer in self.layers:
+            biases.append(layer.getBias())
+        return biases
+    
+    def mutateBias(self):
+        layer = random.choice(self.layers)
+        layer.mutateBias()
 class Layer:
     def __init__(self, input_size: int, output_size: int, weights: list[list[float]]= np.array([]), activation_function: callable = leakyRelu) -> None:
         self.input_size : int = input_size
         self.output_size : int = output_size
-        self.weights = self.setWeights(weights)
+        self.weights = self.initWeights(weights)
         self.f_activation : callable = np.vectorize(activation_function)
         self.f_name = activation_function.__name__
         self.shape = self.weights.shape
@@ -84,7 +103,7 @@ class Layer:
     def getBias(self):
         return self.bias
     
-    def setWeights(self, w) -> list[list[int]]:
+    def initWeights(self, w) -> list[list[int]]:
         """Sets weights as the desired weights from input or random weights."""
         if (len(w) != 0):
             return w
@@ -111,7 +130,7 @@ class Layer:
     def unflattenAndSet(self, w):
         """unflattens the argument to the corresponding shape and sets the weights"""
         w = np.reshape(w[:np.product(self.shape)], self.shape)
-        self.setWeights(w)
+        self.weights = w.copy()
         return np.product(self.shape)
     
     def __repr__(self) -> str:
@@ -125,54 +144,59 @@ class GeneticNetwork:
         
     def advance(self):
         """Runs the genetic algorithm on current agnets"""
-        evaluation = self.evaluate()
-        sorted_agents = self.select(evaluation)
-        new_2_agents = self.crossover(sorted_agents[:2])
-        mutated_agents = self.mutate(new_2_agents + sorted_agents)
-        agents = sorted_agents[:2] + mutated_agents
-        self.agents =  agents + [Network() for _ in range(self.pop_size - len(agents))]
+        agents = self.evaluate()
+        agents = self.select(agents)
+        agents = self.crossover(agents)
+        agents = self.mutation(agents)
+        self.agents = agents + [Network() for _ in range(self.pop_size - len(agents))]
+        
         if (len(self.agents) != self.pop_size):
             raise ValueError("Agents != pop_size")
-
+        
+        return self.agents
+    
     def evaluate(self) -> list[(float, Network)]:
         """Evaluates agent performace, returns a lit of couples (score, network)"""
         # each drone will score itself upon dying.
         return [(n.fitness, n) for n in self.agents]
     
-    def select(self, evaluation) -> list[Network]:
+    def select(self, agents) -> list[Network]:
         """Method that returns 20% of the agents sorted by their score"""
-        return [x[1] for x in sorted(evaluation, key= lambda x : x[0], reverse= False)][:int(0.2*self.pop_size)]
+        return [x[1] for x in sorted(agents, key= lambda x : x[0], reverse= True)][:int(0.2*len(agents))]
 
-    def crossover(self, nets: list[Network]) -> list[Network]:
+    def crossover(self, agents: list[Network]) -> list[Network]:
         """Method used to perform the crossover between 2 agents (networks)"""
-        unflattened_weights = [n.flatten() for n in nets]
-        if (len(unflattened_weights[0]) != len(unflattened_weights[1])):
-            raise ValueError("Networks doesn't have the same number of neurones")
-        for i in range(len(unflattened_weights[0])):
-            if (random.random() > 0.5):
-                unflattened_weights[0][i], unflattened_weights[1][i] = unflattened_weights[1][i], unflattened_weights[0][i]
-        # slice_at = random.randint(a= 1, b= len(unflattened_weights[0])-1)
-        # unflattened_weights = np.concatenate([unflattened_weights[i][:slice_at].tolist() + unflattened_weights[(i+1)%2][slice_at:].tolist() for i in range(2)])
-        unflattened_weights = np.concatenate(unflattened_weights)
-        start = 0
-        length = 0
-        for n in nets:
-            length += len(n.flatten())
-            n.setWeights(unflattened_weights[start:length])
-            start += length
-        return nets
+        offsprings = []
 
-    def mutate(self, agents: list[Network]) -> list[Network]:
+        for _ in range(int((self.pop_size - len(agents))/2)):
+            p1 = random.choice(agents)
+            p2 = random.choice(agents)
+            parent1_weights = p1.flatten()
+            parent2_weights = p2.flatten()
+            weights_length = len(parent1_weights)
+            child_weights = np.array([0] * weights_length)
+            
+            for i in range(weights_length):
+                child_weights[i] = parent1_weights[i] if random.random() < 0.5 else parent2_weights[i]
+            
+            biases = p1.getBiases() if random.random() > 0.5 else p2.getBiases()
+            offsprings.append(Network(child_weights, biases))
+        return offsprings
+
+    def mutation(self, agents: list[Network]) -> list[Network]:
         """Method used to perform a random mutation on a network"""
         for agent in agents:
+            agent.mutateBias()
             flattened = agent.flatten()
-            if random.uniform(0.0, 1.0) <= 0.1:
-                randint = random.randint(0,len(flattened)-1)
-                # flattened[randint] = np.random.randn()
-                if (random.random() > 0.5):
-                    flattened[randint] = flattened[randint]*0.5 if (random.random() > 0.5) else flattened[randint]*1.5
-                else:
-                    flattened[randint] = flattened[randint] if (random.random() > 0.5) else flattened[randint]*-1
+            s = sum(flattened)
+            for _ in range(len(flattened)):
+                if random.random() <= 0.1:
+                    randint = random.randint(0,len(flattened)-1)
+                    # flattened[randint] = np.random.randn()
+                    if (random.random() > 0.5):
+                        flattened[randint] = flattened[randint]*0.5 if (random.random() > 0.5) else flattened[randint]*1.5
+                    else:
+                        flattened[randint] = flattened[randint] if (random.random() > 0.5) else flattened[randint]*-1
             agent.setWeights(flattened)
         return agents 
 

@@ -39,14 +39,15 @@ class Drone:
         self.fl = 0
         self.fr = 0
     
-    def draw(self):
+    def draw(self, prop_anim):
         self.screen.blit(self.rotated_image, self.rotated_image_rect)
-        self.left_prop.draw()
-        self.right_prop.draw()
+        self.left_prop.draw(prop_anim)
+        self.right_prop.draw(prop_anim)
         # self.left_prop.draw()
         # self.right_prop.draw()
 
-    def update(self, network):
+    def update(self, network, deltaTime):
+        self.deltaTime = deltaTime
         actions= network.forward([[self.pos.x / WIDTH, self.pos.y / HEIGHT, self.fl*2, self.fr*2, self.ax, self.ay, self.vx, self.vy, self.phi / 360, self.phiv, self.phia]]) # multiplied by 2 for the range to be between 0 and 1
         self.left_acceleration, self.right_acceleration = [True if random.random() <= a else False for a in actions[-1]]
         self.updateForces()
