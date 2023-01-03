@@ -49,9 +49,9 @@ class Network:
             print("Layer {}: {}".format(i+1, layer))
 
     def self_init(self):
-        self.add(2, 11, activation= sigmoid)
-        # self.add(32)
-        # self.add(2, activation= sigmoid)
+        self.add(32, 11, activation= relu)
+        self.add(16)
+        self.add(2, activation= sigmoid)
         # self.add(2, activation= sigmoid)
 
     def flatten(self):
@@ -81,6 +81,7 @@ class Network:
     def mutateBias(self):
         layer = random.choice(self.layers)
         layer.mutateBias()
+    
 class Layer:
     def __init__(self, input_size: int, output_size: int, weights: list[list[float]]= np.array([]), activation_function: callable = leakyRelu) -> None:
         self.input_size : int = input_size
@@ -92,10 +93,11 @@ class Layer:
         self.bias = random.random() * 2 - 1
     
     def mutateBias(self):
-        if (random.uniform(0.0, 1.0) > 0.1):
-            self.bias = self.bias * 1.5 if random.random() > 0.5 else self.bias * 0.5
-        if (random.uniform(0.0, 1.0) > 0.1):
-            self.bias = self.bias * -1
+        if (random.uniform(0.0, 1.0) < 0.1):
+            if (random.random() < 0.5):
+                self.bias = self.bias * 1.5 if random.random() > 0.5 else self.bias * 0.5
+            else:
+                self.bias = self.bias * -1
         
     def setBias(self, newbias):
         self.bias = newbias
@@ -141,15 +143,24 @@ class GeneticNetwork:
     def __init__(self, population_size: int) -> None:
         self.agents : list[Network] = [Network() for _ in range(population_size)]
         self.pop_size = population_size
-        
-    def advance(self):
+        self.best_agents : list[Network] = list()
+    
+    def advance(self, generation_count):
         """Runs the genetic algorithm on current agnets"""
         agents = self.evaluate()
         agents = self.select(agents)
+        self.best_agents.extend(agents[:max(1, int(generation_count/5))])
         agents = self.crossover(agents)
         agents = self.mutation(agents)
+        best_agents_id = list(set([(hex(id(x)), x) for x in self.best_agents]))
+        self.best_agents = [x[1] for x in best_agents_id]
+        self.best_agents = sorted(self.best_agents, key= lambda network : network.fitness, reverse= True)
+        self.best_agents = self.best_agents[:max(1, int(generation_count/5))]
+        for n in self.best_agents:
+            print("{} : {}".format(hex(id(n)), n.fitness))
         self.agents = agents + [Network() for _ in range(self.pop_size - len(agents))]
         
+        self.agents = self.agents[:self.pop_size]
         if (len(self.agents) != self.pop_size):
             raise ValueError("Agents != pop_size")
         
@@ -179,7 +190,7 @@ class GeneticNetwork:
             for i in range(weights_length):
                 child_weights[i] = parent1_weights[i] if random.random() < 0.5 else parent2_weights[i]
             
-            biases = p1.getBiases() if random.random() > 0.5 else p2.getBiases()
+            biases = p1.getBiases() if random.random() < 0.5 else p2.getBiases()
             offsprings.append(Network(child_weights, biases))
         return offsprings
 
@@ -193,10 +204,10 @@ class GeneticNetwork:
                 if random.random() <= 0.1:
                     randint = random.randint(0,len(flattened)-1)
                     # flattened[randint] = np.random.randn()
-                    if (random.random() > 0.5):
-                        flattened[randint] = flattened[randint]*0.5 if (random.random() > 0.5) else flattened[randint]*1.5
+                    if (random.random() <= 0.5):
+                        flattened[randint] = flattened[randint]*0.5 if (random.random() < 0.5) else flattened[randint]*1.5
                     else:
-                        flattened[randint] = flattened[randint] if (random.random() > 0.5) else flattened[randint]*-1
+                        flattened[randint] = flattened[randint] if (random.random() < 0.5) else flattened[randint]*-1
             agent.setWeights(flattened)
         return agents 
 

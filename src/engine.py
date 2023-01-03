@@ -32,6 +32,7 @@ class Engine:
         game_on = True
         propeller_animation = dict()
         weights_address = set()
+        gen_time = time.time()
         while game_on:
             frame_dtime = time.time()
             for event in pygame.event.get():
@@ -40,13 +41,15 @@ class Engine:
                     # raise SystemExit
 
             for i, (network, drone) in enumerate(zip(self.genetic.agents, self.drones)):
-                if (drone.update(network, time.time() - frame_dtime) == 1 and network.fitness == None):
-                    # drone is out of screen and so is dead. -> get fitness
-                    self.genetic.agents[i].fitness = time.time() - start_time
-                drone.draw(propeller_animation)
+                if (drone.inScreen()):
+                    if (drone.update(network, time.time() - frame_dtime) == 1 and network.fitness == None):
+                        # drone is out of screen and so is dead. -> get fitness
+                        self.genetic.agents[i].fitness = time.time() - start_time
+                    drone.draw(propeller_animation)
             # print(len(propeller_animation))
             
             if (all([not x.inScreen() for x in self.drones])):
+                gen_time = time.time()
                 # print([network.flatten() for network in self.genetic.agents])
                 # genetic do your thing
                 # for n in self.genetic.agents:
@@ -54,7 +57,8 @@ class Engine:
                 # print("------------------------------")
                 print("Gen: {}".format(generation))
                 if len(set([hex(id(network)) for network in self.genetic.agents])) != POP_SIZE:
-                    raise ValueError("Networks have same memory address")
+                    print("Networks have same memory address {}".format(len(set([hex(id(network)) for network in self.genetic.agents]))))
+                    raise ValueError("Networks have same memory address {}".format(len(set([hex(id(network)) for network in self.genetic.agents]))))
                 fitness = [(n.fitness, n) for n in self.genetic.agents]
                 best_fitness, best_network = max(fitness, key= lambda x : x[0])
                 print("Best performance: {}, weights set from random: {}".format(best_fitness, best_network.randomWeights))
@@ -62,7 +66,7 @@ class Engine:
                 history_1.append(sum([s[0] for s in fitness])/len(fitness))
                 history_2.append(best_fitness)
                 # genetic algorithm iteration
-                self.genetic.advance()
+                self.genetic.advance(generation)
                 for d in self.drones:
                     d.revive()
                 # reset network scores
@@ -71,6 +75,7 @@ class Engine:
                 generation += 1
                 time.sleep(0.3)
                 start_time = time.time()
+            
             pygame.display.flip()     
             clock.tick(75)
             self.screen.fill(0)
