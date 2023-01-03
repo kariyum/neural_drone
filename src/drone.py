@@ -1,6 +1,6 @@
 import pygame
 import math
-import random
+from numpy import random
 
 # local imports
 from propeller import Propeller
@@ -49,8 +49,8 @@ class Drone:
     def update(self, network, deltaTime):
         self.deltaTime = deltaTime
         actions= network.forward([[self.pos.x / WIDTH, self.pos.y / HEIGHT, self.fl*2, self.fr*2, self.ax, self.ay, self.vx, self.vy, self.phi / 360, self.phiv, self.phia]]) # multiplied by 2 for the range to be between 0 and 1
-        # self.left_acceleration, self.right_acceleration = [True if random.random() <= a else False for a in actions[-1]]
-        self.left_acceleration, self.right_acceleration = [True if a >= 0.5 else False for a in actions[-1]]
+        self.left_acceleration, self.right_acceleration = [True if random.normal(loc= 0.5, scale= 0.1) <= a else False for a in actions[-1]]
+        # self.left_acceleration, self.right_acceleration = [True if  a >= 0.5 else False for a in actions[-1]]
         self.updateForces()
         if (not self.inScreen()): return 1
         return 0
