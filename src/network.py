@@ -2,7 +2,7 @@ import random
 import numpy as np
 
 def leakyRelu(f: float) -> float:
-    a = 0.001
+    a = 0.01
     return a*f if f < 0 else f
 
 def relu(f: float) -> float:
@@ -49,10 +49,10 @@ class Network:
             print("Layer {}: {}".format(i+1, layer))
 
     def self_init(self):
-        self.add(32, 11, activation= relu)
-        self.add(16)
+        # self.add(512, 784, activation= relu)
+        # self.add(10, identity)
+        self.add(32, 11, activation= leakyRelu)
         self.add(2, activation= sigmoid)
-        # self.add(2, activation= sigmoid)
 
     def flatten(self):
         """returns a combined vector of weights of the network"""
@@ -149,18 +149,22 @@ class GeneticNetwork:
         """Runs the genetic algorithm on current agnets"""
         agents = self.evaluate()
         agents = self.select(agents)
-        self.best_agents.extend(agents[:max(1, int(generation_count/5))])
+        self.best_agents.extend(agents[:int(generation_count/5 + 1)])
         agents = self.crossover(agents)
         agents = self.mutation(agents)
         best_agents_id = list(set([(hex(id(x)), x) for x in self.best_agents]))
         self.best_agents = [x[1] for x in best_agents_id]
         self.best_agents = sorted(self.best_agents, key= lambda network : network.fitness, reverse= True)
-        self.best_agents = self.best_agents[:max(1, int(generation_count/5))]
+        self.best_agents = self.best_agents[:int(generation_count/5 + 1)]
         for n in self.best_agents:
             print("{} : {}".format(hex(id(n)), n.fitness))
-        self.agents = agents + [Network() for _ in range(self.pop_size - len(agents))]
+        self.agents = self.best_agents[:int(generation_count/5 + 1)] + agents + [Network() for _ in range(self.pop_size - len(agents))]
         
+        
+        """YO CHANGE THIS LINE"""
+        # self.agents = agents + [Network() for _ in range(self.pop_size - len(agents))]
         self.agents = self.agents[:self.pop_size]
+        # self.agents = [Network() for _ in range(self.pop_size)]
         if (len(self.agents) != self.pop_size):
             raise ValueError("Agents != pop_size")
         
@@ -185,13 +189,20 @@ class GeneticNetwork:
             parent1_weights = p1.flatten()
             parent2_weights = p2.flatten()
             weights_length = len(parent1_weights)
-            child_weights = np.array([0] * weights_length)
+            child_weights = []
             
             for i in range(weights_length):
-                child_weights[i] = parent1_weights[i] if random.random() < 0.5 else parent2_weights[i]
+                child_weights.append(parent1_weights[i] if random.random() < 0.5 else parent2_weights[i])
             
             biases = p1.getBiases() if random.random() < 0.5 else p2.getBiases()
             offsprings.append(Network(child_weights, biases))
+        
+        for i in range(len(offsprings)):
+            for j in range(len(offsprings)):
+                if i != j:
+                    if (list(offsprings[i].flatten()) == list(offsprings[j].flatten())):
+                        print(f"Children have same weights {hex(id(offsprings[i]))} {hex(id(offsprings[j]))}")
+                        # raise ValueError(f"Children have same weights. {offsprings[i].flatten()} {offsprings[j].flatten()}")
         return offsprings
 
     def mutation(self, agents: list[Network]) -> list[Network]:

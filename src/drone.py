@@ -6,7 +6,7 @@ from numpy import random
 from propeller import Propeller
 from network import Network
 
-WIDTH, HEIGHT = (1280/ 2, 720 / 2) # (1920, 1080)
+WIDTH, HEIGHT = (500, 300) #(1280, 720)#(1280/ 2, 720 / 2) # (1920, 1080)
 class Drone:
     def __init__(self, screen, pos= pygame.math.Vector2(WIDTH/2, HEIGHT/2)):
         self.screen = screen
@@ -49,7 +49,7 @@ class Drone:
     def update(self, network, deltaTime):
         self.deltaTime = deltaTime
         actions= network.forward([[self.pos.x / WIDTH, self.pos.y / HEIGHT, self.fl*2, self.fr*2, self.ax, self.ay, self.vx, self.vy, self.phi / 360, self.phiv, self.phia]]) # multiplied by 2 for the range to be between 0 and 1
-        self.left_acceleration, self.right_acceleration = [True if random.normal(loc= 0.5, scale= 0.1) <= a else False for a in actions[-1]]
+        self.left_acceleration, self.right_acceleration = [True if a >= random.normal(loc= 0.5, scale= 0.1) else False for a in actions[-1]]
         # self.left_acceleration, self.right_acceleration = [True if  a >= 0.5 else False for a in actions[-1]]
         self.updateForces()
         if (not self.inScreen()): return 1
