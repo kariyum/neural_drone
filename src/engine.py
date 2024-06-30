@@ -15,6 +15,7 @@ class Engine:
         pygame.init()
         pygame.display.set_caption("Drone brain")
         
+        self.font = pygame.font.Font(pygame.font.get_default_font(), 24)
         self.screen = pygame.display.set_mode((width, height))
         self.w = width
         self.h = height
@@ -26,14 +27,23 @@ class Engine:
     def run(self):
         clock = pygame.time.Clock()
         start_time = time.time()
-        generation = 0
+        generation = 1
         history_1 = list()
         history_2 = list()
         game_on = True
         propeller_animation = dict()
         weights_address = set()
         gen_time = time.time()
+        generation_text_surface = self.font.render(f'GEN {generation}', True, (255, 255, 255))
+        generation_textRect = generation_text_surface.get_rect()
+        generation_textRect.topleft = (self.w * 0.02, self.h * 0.9)
+        
+        best_fitness_text_surface = self.font.render(None, True, (255, 255, 255))
+        best_fitness_textRect = best_fitness_text_surface.get_rect()
+        best_fitness_textRect.topleft = (self.w * 0.02, self.h * 0.95)
         while game_on:
+            self.screen.blit(generation_text_surface, generation_textRect)
+            self.screen.blit(best_fitness_text_surface, best_fitness_textRect)
             frame_dtime = time.time()
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -73,6 +83,8 @@ class Engine:
                 for i in range(len(self.genetic.agents)):
                     self.genetic.agents[i].fitness = None
                 generation += 1
+                generation_text_surface = self.font.render(f'GEN {generation}', True, (255, 255, 255))
+                best_fitness_text_surface = self.font.render(f'Best {max(history_2):.2f} seconds at GEN {history_2.index(max(history_2)) + 1}', True, (255, 255, 255))
                 time.sleep(0.3)
                 start_time = time.time()
             

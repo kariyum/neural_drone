@@ -131,9 +131,9 @@ class Layer:
 
     def unflattenAndSet(self, w):
         """unflattens the argument to the corresponding shape and sets the weights"""
-        w = np.reshape(w[:np.product(self.shape)], self.shape)
+        w = np.reshape(w[:np.prod(self.shape)], self.shape)
         self.weights = w.copy()
-        return np.product(self.shape)
+        return np.prod(self.shape)
     
     def __repr__(self) -> str:
         return "Weights shape: {}, Activation: {}".format(self.weights.shape, self.f_name)

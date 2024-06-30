@@ -6,12 +6,12 @@ from numpy import random
 from propeller import Propeller
 from network import Network
 
-WIDTH, HEIGHT = (500, 300) #(1280, 720)#(1280/ 2, 720 / 2) # (1920, 1080)
+WIDTH, HEIGHT = (1280, 720)#(1280/ 2, 720 / 2) # (1920, 1080)
 class Drone:
     def __init__(self, screen, pos= pygame.math.Vector2(WIDTH/2, HEIGHT/2)):
         self.screen = screen
         self.size = pygame.math.Vector2(100, 50)
-        self.image = pygame.transform.scale(pygame.image.load("C:\\Users\\S B S\\Documents\\neural_drone\\neural_drone\\resources\\drone.png"), self.size)
+        self.image = pygame.transform.scale(pygame.image.load("./resources/drone.png"), self.size)
         self.left_prop = Propeller(self.screen, pygame.math.Vector2(100, 50), left= 1)
         self.right_prop = Propeller(self.screen, pygame.math.Vector2(100, 50), left= 0)
         self.rotated_image = pygame.transform.rotate(self.image, 0)
